@@ -1,0 +1,15 @@
+anypointmq:
+  auth:
+    client_id: "REPLACED_BY_USER"
+    client_secret: "REPLACED_BY_USER"
+    
+# HTTP Request Configuration
+http-request:
+  banner-admissions-sapi:
+    auth:
+      client_id: "REPLACED_BY_USER"
+      client_secret: "REPLACED_BY_USER"
+  slate-admissions-sapi:
+    auth:
+      client_id: "REPLACED_BY_USER"
+      client_secret: "REPLACED_BY_USER"  

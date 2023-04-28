@@ -1,0 +1,9 @@
+{
+  "secureProperties": [
+     "mule.encryption.key",
+     "sftp-slate.password", 
+     "database.banner.password",
+     "anypointmq.auth.client_id",
+     "anypointmq.auth.client_secret"],
+   "minMuleVersion": "4.4.0" 
+}

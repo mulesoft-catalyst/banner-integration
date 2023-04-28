@@ -1,0 +1,15 @@
+#This Local API's config Details
+autodiscovery:
+  am-slate-app-papi:
+    id: "REPLACED_BY_USER"
+
+database:
+  banner:
+    host: "REPLACED_BY_USER"
+    port: "REPLACED_BY_USER"
+    username: "REPLACED_BY_USER"
+    service-name: "REPLACED_BY_USER"
+
+# Logger Category
+logger:
+  category: "com.slate2banner.banner.system-api"

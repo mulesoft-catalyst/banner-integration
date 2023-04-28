@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq"
+	
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:adtalem-core="http://www.mulesoft.org/schema/mule/adtalem-core"
+	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
+	xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd 
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core 
+http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd
+http://www.mulesoft.org/schema/mule/adtalem-core http://www.mulesoft.org/schema/mule/adtalem-core/current/mule-adtalem-core.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd">
+	 
+	<global-property doc:name="Global Property" doc:id="fe2078f3-d42b-4aca-b43b-a3a7a5dd0642" name="mule.env" value="local" />
+	        
+	<http:request-config
+		name="HTTP_Request_configuration"
+		doc:name="HTTP Request configuration"
+		doc:id="3952742f-203f-4760-ad8f-c6059bd49404">
+		<http:request-connection host="abc.test"
+			port="8081" />
+	</http:request-config>
+	<configuration-properties
+		doc:name="Configuration properties"
+		doc:id="1428de73-8db5-4bb6-9437-53642d92c997"
+		file="properties/common/common.yaml" />
+
+	<configuration-properties
+		doc:name="Configuration properties"
+		doc:id="ecd866b9-c83d-46c2-87b4-13c3206aca9c"
+		file="properties/${mule.env}.yaml" />
+	<db:config name="Database_Banner_Config" doc:name="Database Config" doc:id="7250b8d8-3d23-4401-a0ee-25545a9ccbee" >
+		<db:oracle-connection host="${database.banner.host}" port="${database.banner.port}" user="${database.banner.username}" password="${secure::database.banner.password}" serviceName="${database.banner.service-name}" />
+	</db:config>	
+
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="3d0b4533-7cc2-40f4-aff9-ff74e4cd6aa0" file="properties/${mule.env}-secure.yaml" key="REPLACED_BY_USER" >
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>   
+	<global-property doc:name="Global Property" doc:id="68198eaf-c87c-48b6-8b74-2b92df64e57f" name="mule.encryption.key" value="REPLACED_BY_USER" />
+	<api-gateway:autodiscovery apiId="${autodiscovery.am-slate-app-papi.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="7f08146d-6bd0-4dfe-a22f-b1b7784b19c7" flowRef="banner-admissions-system-api-main" />		
+				
+</mule>

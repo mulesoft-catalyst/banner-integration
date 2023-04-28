@@ -1,0 +1,34 @@
+#This Local API's config Details
+autodiscovery:
+  slate-sftp-sapi:
+    id: "REPLACED_BY_USER"
+
+# HTTP Request Configuration
+http-request:
+  # Service Now SAPI Configuration
+  alert-service-sapi:
+    protocol: "REPLACED_BY_USER"
+    host: "REPLACED_BY_USER"
+    port: "REPLACED_BY_USER"  
+    maxRetry: "REPLACED_BY_USER"
+    maxInterval: "REPLACED_BY_USER"
+    reconnection:
+      attempts: "REPLACED_BY_USER"
+      interval: "REPLACED_BY_USER"
+      frequency: "REPLACED_BY_USER"
+
+# sftp
+sftp-slate:
+   host: "REPLACED_BY_USER"
+   port: "REPLACED_BY_USER"
+   username: "REPLACED_BY_USER"
+   inputPath: "REPLACED_BY_USER"
+   processedPath: "REPLACED_BY_USER"                            
+   
+anypointmq:
+  url: "REPLACED_BY_USER"
+  application:
+    name: "REPLACED_BY_USER"   
+
+schedular:
+  cron: "REPLACED_BY_USER"

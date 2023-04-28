@@ -1,0 +1,19 @@
+anypointmq:
+  auth:
+    client_id: "REPLACED_BY_USER"
+    client_secret: "REPLACED_BY_USER"
+
+database:
+  banner:
+    password: "REPLACED_BY_USER"
+
+# sftp details
+sftp-slate:
+  password: "REPLACED_BY_USER"
+  
+# HTTP Request Configuration
+http-request:
+  alert-service-sapi:
+    auth:
+      client_id: "REPLACED_BY_USER"
+      client_secret: "REPLACED_BY_USER"  

@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:error-handler-plugin="http://www.mulesoft.org/schema/mule/error-handler-plugin" xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:adtalem-core="http://www.mulesoft.org/schema/mule/adtalem-core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/adtalem-core http://www.mulesoft.org/schema/mule/adtalem-core/current/mule-adtalem-core.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd
+http://www.mulesoft.org/schema/mule/error-handler-plugin http://www.mulesoft.org/schema/mule/error-handler-plugin/current/mule-error-handler-plugin.xsd">
+
+
+
+	<sub-flow name="sf-slate-data-rest" doc:id="9da355f2-e7d9-4a2e-9eba-8fddcd873b76" >
+		<http:request method="GET" doc:name="/persons/{SlateId}" doc:id="4ecffb66-8cb2-4de7-b1f3-ac11be7f96d9" config-ref="HTTP_Request_Slate_Sftp_Sapi_Config" path="/persons/{SlateId}" target="personResponse">
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	"client_secret" : p('secure::http-request.slate-sftp-sapi.auth.client_secret'),
+	"client_id" : p('secure::http-request.slate-sftp-sapi.auth.client_id')
+}]]]></http:headers>
+			<http:uri-params><![CDATA[#[output application/java
+---
+{
+	"SlateId" : vars.initialPayload.SlateId
+}]]]></http:uri-params>
+		</http:request>
+		<set-variable value="#[%dw 2.0&#10;output application/json&#10;---&#10;vars.personResponse.Event.Items.Data[0]]" doc:name="personJson" doc:id="c13ec9c6-8314-4ce8-a3d8-55ad0916895f" variableName="personJson" />
+		
+		<http:request method="GET" doc:name="/addresses/{SlateId}" doc:id="a016beb2-9716-4fe0-9e8e-809e67b5cdbc" config-ref="HTTP_Request_Slate_Sftp_Sapi_Config" path="/addresses/{SlateId}" target="addressResponse">
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	"client_secret" : p('secure::http-request.slate-sftp-sapi.auth.client_secret'),
+	"client_id" : p('secure::http-request.slate-sftp-sapi.auth.client_id')
+}]]]></http:headers>
+			<http:uri-params><![CDATA[#[output application/java
+---
+{
+	"SlateId" : vars.initialPayload.SlateId
+}]]]></http:uri-params>
+		</http:request>
+		<set-variable value="#[%dw 2.0&#10;output application/json&#10;---&#10;vars.addressResponse.Event.Items.Data[0]]" doc:name="addressJson" doc:id="94ec2cf9-5faa-47df-82f7-95b7afa368a3" variableName="addressJson" />
+		<http:request method="GET" doc:name="/schools/{SlateId}" doc:id="cdee69af-76a9-47ff-8ef1-5641ef72635a" config-ref="HTTP_Request_Slate_Sftp_Sapi_Config" path="/schools/{SlateId}" target="schoolsResponse">
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	"client_secret" : p('secure::http-request.slate-sftp-sapi.auth.client_secret'),
+	"client_id" : p('secure::http-request.slate-sftp-sapi.auth.client_id')
+}]]]></http:headers>
+			<http:uri-params><![CDATA[#[output application/java
+---
+{
+	"SlateId" : vars.initialPayload.SlateId
+}]]]></http:uri-params>
+		</http:request>
+		<set-variable value="#[%dw 2.0&#10;output application/json&#10;---&#10;vars.schoolsResponse.Event.Items.Data]" doc:name="schoolsJson" doc:id="a13a5ddb-d2df-413d-bfa4-1ae6d7f6a78a" variableName="schoolsJson" />
+		<http:request method="GET" doc:name="/test-scores/{SlateId}" doc:id="1bec1feb-6fca-4b12-8650-f3e5ef340dd2" config-ref="HTTP_Request_Slate_Sftp_Sapi_Config" path="/test-scores/{SlateId}" target="testScoresResponse">
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	"client_secret" : p('secure::http-request.slate-sftp-sapi.auth.client_secret'),
+	"client_id" : p('secure::http-request.slate-sftp-sapi.auth.client_id')
+}]]]></http:headers>
+			<http:uri-params><![CDATA[#[output application/java
+---
+{
+	"SlateId" : vars.initialPayload.SlateId
+}]]]></http:uri-params>
+		</http:request>
+		<set-variable value="#[%dw 2.0&#10;output application/json&#10;---&#10;vars.testScoresResponse.Event.Items.Data]" doc:name="testScoresJson" doc:id="27d22152-f948-4b80-9347-db7b3181061d" variableName="testScoresJson" />
+
+		<ee:transform doc:name="test types for loops" doc:id="d5cdc6c8-cd41-4ea1-9d89-a33f1cd1105a" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="actTestScoresJson" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.testScoresJson filter (upper($.TestType) contains "ACT")]]></ee:set-variable>
+				<ee:set-variable variableName="satTestScoresJson" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.testScoresJson filter (upper($.TestType) contains "SATR")]]></ee:set-variable>
+				<ee:set-variable variableName="duoTestScoresJson" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.testScoresJson filter (upper($.TestType) contains "DUO")]]></ee:set-variable>
+				<ee:set-variable variableName="ieltsTestScoresJson" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.testScoresJson filter (upper($.TestType) contains "IELTS")]]></ee:set-variable>
+				<ee:set-variable variableName="toeflTestScoresJson" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.testScoresJson filter (upper($.TestType) contains "TOEFL")]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</sub-flow>
+		
+	<flow name="sf-slate-to-banner-core-flows" doc:id="c84cf1ea-f886-407c-99bc-2e2b6335a448" >
+		<flow-ref doc:name="sf-slate-data-rest-call" doc:id="0a07dcfe-e982-4d3d-80de-1c4cb61df90b" name="sf-slate-data-rest" />
+		<set-payload value="#[vars.initialPayload]" doc:name="initialPayload" doc:id="9b3e2b26-9522-4a0b-be09-516657c8e0d4" />
+		<http:request method="POST" doc:name="/admissions" doc:id="ab97108a-f361-4577-aba7-4dcb9e5d9810" config-ref="HTTP_Request_Banner_Admissions_Sapi_Config" path="/admissions" target="personResponse" >
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"client_secret" : p('secure::http-request.slate-sftp-sapi.auth.client_secret'),
+	"client_id" : p('secure::http-request.slate-sftp-sapi.auth.client_id')
+}]]]></http:headers>
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"SlateId" : vars.initialPayload.SlateId
+}]]]></http:uri-params>
+		</http:request>
+		<set-payload value="#[vars.testScoresJson]" doc:name="testScoresJson" doc:id="71913de0-4670-4212-9682-5d8ecb62836a" />
+		<http:request method="POST" doc:name="/test-scores" doc:id="d96cf8ef-8e48-4d86-829c-5ba0c530c4b0" config-ref="HTTP_Request_Banner_Admissions_Sapi_Config" path="/test-scores" target="personResponse" >
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"client_secret" : p('secure::http-request.slate-sftp-sapi.auth.client_secret'),
+	"client_id" : p('secure::http-request.slate-sftp-sapi.auth.client_id')
+}]]]></http:headers>
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"SlateId" : vars.initialPayload.SlateId
+}]]]></http:uri-params>
+		</http:request>
+		<set-payload value="#[vars.personJson]" doc:name="personJson" doc:id="6fe50038-3352-45f5-b172-5420e66f2d0e" />
+		<http:request method="POST" doc:name="/persons" doc:id="2f9e1104-bdcc-4959-8e03-af35d9070d90" config-ref="HTTP_Request_Banner_Admissions_Sapi_Config" path="/persons" target="personResponse" >
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"client_secret" : p('secure::http-request.slate-sftp-sapi.auth.client_secret'),
+	"client_id" : p('secure::http-request.slate-sftp-sapi.auth.client_id')
+}]]]></http:headers>
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"SlateId" : vars.initialPayload.SlateId
+}]]]></http:uri-params>
+		</http:request>
+		<set-payload value="#[vars.addressJson]" doc:name="addressJson" doc:id="4bc31ef2-32a8-44af-bb5e-8d4b1467322e" />
+		<http:request method="POST" doc:name="/addresses" doc:id="34136650-d733-4880-962c-0d96910404c7" config-ref="HTTP_Request_Banner_Admissions_Sapi_Config" path="/addresses" target="personResponse" >
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"client_secret" : p('secure::http-request.slate-sftp-sapi.auth.client_secret'),
+	"client_id" : p('secure::http-request.slate-sftp-sapi.auth.client_id')
+}]]]></http:headers>
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"SlateId" : vars.initialPayload.SlateId
+}]]]></http:uri-params>
+		</http:request>
+
+	</flow>
+	
+	<flow name="mf-subscribe-application-records" doc:id="f21d4eb3-f73a-4b69-b57e-35576a22a148" maxConcurrency="1" initialState="started">
+		<anypoint-mq:subscriber doc:name="Subscriber" doc:id="4af46768-7923-4e32-b945-3b7ef6c34d59" config-ref="Anypoint_MQ_Config" destination="${anypointmq.application.name}" acknowledgementMode="MANUAL" acknowledgementTimeout="3" acknowledgementTimeoutUnit="MINUTES" >
+			<anypoint-mq:subscriber-type >
+				<anypoint-mq:prefetch maxLocalMessages="1" />
+			</anypoint-mq:subscriber-type>
+		</anypoint-mq:subscriber>
+		<set-variable value="#[attributes.ackToken]" doc:name="set-ackToken" doc:id="7443c5b9-f291-4c5f-a803-d240e0e4f9eb" variableName="ackToken" />
+		<set-variable value="#[payload]" doc:name="Set Variable" doc:id="e6fd4821-7dfb-4faa-9653-0e5d57dfc72d" variableName="completeEvent" />
+		<ee:transform doc:name="initialPayload" doc:id="f1f0aa5d-c964-4c5f-b0e7-82186d98aba4">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="initialPayload"><![CDATA[%dw 2.0
+output application/json
+---
+payload.Event.Items.Data[0] default ""]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="sf-slate-to-banner-core-flows-call" doc:id="ce8b355a-454f-4084-a865-f3c49ae8fb32" name="sf-slate-to-banner-core-flows" />
+		<anypoint-mq:ack doc:name="Ack" doc:id="d5176136-e0b2-4326-ad94-7e3515f622bb" config-ref="Anypoint_MQ_Config" ackToken="#[vars.ackToken]" />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="3bd65d4a-bfe7-4321-bb12-a1ae067eb7ac" >
+				<anypoint-mq:ack doc:name="Ack" doc:id="4b926cf3-2223-4877-bdde-4d260dfadf22" config-ref="Anypoint_MQ_Config" ackToken="#[vars.ackToken]" />
+				<set-variable value="#[%dw 2.0&#10;import * from dw::util::Timer&#10;output application/java&#10;---&#10;currentMilliseconds()]" doc:name="current-timestamp-in-millisec" doc:id="6722dc06-1908-4f5c-8a31-ef12c49b97ba" variableName="timeStamp" />
+				<ee:transform doc:name="applicationJsonDLQ" doc:id="03704818-6374-484c-b248-8334fbc05d9d">
+					<ee:message />
+					<ee:variables>
+						<ee:set-variable variableName="applicationJsonDLQ" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Timestamp" : vars.timeStamp as String,
+	"Event" : {
+		"InterfaceDetails" 		:  {
+			"Domain" 			: "slate-to-banner-application",
+			"ModuleName" 		: "am-slate-app-papi",
+			"MessageType" 		: "slate-to-banner-application-dlq",
+			"MessageRetried" 	: 1
+		},
+		"Items" : {
+			"Data" : [{
+                  SlateId : vars.initialPayload.SlateId,
+                  SlateAppId : vars.initialPayload.SlateAppId,
+                  StudentType : vars.initialPayload.StudentType,
+                  AcademicInterest1 : vars.initialPayload.AcademicInterest1,
+                  AcademicInterest2 : vars.initialPayload.AcademicInterest2,
+                  Program1 : vars.initialPayload.Program1,
+                  Program2 : vars.initialPayload.Program2,
+                  Program3 : vars.initialPayload.Program3,
+                  Program4 : vars.initialPayload.Program4,
+                  Program5 : vars.initialPayload.Program5,
+                  GRTakingCourse : vars.initialPayload.GRTakingCourse,
+                  GraduateInterest : vars.initialPayload.GraduateInterest,
+                  GRProgram1 : vars.initialPayload.GRProgram1,
+                  GRProgram2 : vars.initialPayload.GRProgram2,
+                  GREmphasis : vars.initialPayload.GREmphasis,
+                  GRAttribute : vars.initialPayload.GRAttribute,
+                  GRAdvisor : vars.initialPayload.GRAdvisor,
+                  Semester : vars.initialPayload.Semester,
+                  ApplicationApplicationDegreeType : vars.initialPayload.ApplicationApplicationDegreeType,
+                  ApplicationApplicationBestDescription : vars.initialPayload.ApplicationApplicationBestDescription,
+                  ApplicationApplicationCurrentlyEnrolled : vars.initialPayload.ApplicationApplicationCurrentlyEnrolled,
+                  ApplicationApplicationProgramFormat : vars.initialPayload.ApplicationApplicationProgramFormat,
+                  ApplicationEarlyAwarenessProgram : vars.initialPayload.ApplicationEarlyAwarenessProgram,
+                  ApplicationApplicationPartialTermStart : vars.initialPayload.ApplicationApplicationPartialTermStart,
+                  ApplicationTotalCollegeCreditHours : vars.initialPayload.ApplicationTotalCollegeCreditHours,
+                  ApplicationScholarship : vars.initialPayload.ApplicationScholarship,
+                  ApplicationCharterScholarship : vars.initialPayload.ApplicationCharterScholarship,
+                  ApplicationUprepScholarship : vars.initialPayload.ApplicationUprepScholarship,
+                  ApplicationRecalculatedHSGPA : vars.initialPayload.ApplicationRecalculatedHSGPA,
+                  ApplicationRecalculatedCollegeGPA : vars.initialPayload.ApplicationRecalculatedCollegeGPA,
+                  ApplicationCumulativeGraduateGPA : vars.initialPayload.ApplicationCumulativeGraduateGPA,
+                  ApplicationCumulativeUndergraduateGPA : vars.initialPayload.ApplicationCumulativeUndergraduateGPA,
+                  ApplicationLast60GPA : vars.initialPayload.ApplicationLast60GPA,
+                  ApplicationFelonyHistory : vars.initialPayload.ApplicationFelonyHistory,
+                  ApplicationAppBadgesAndCertificates : vars.initialPayload.ApplicationAppBadgesAndCertificates,
+                  ApplicationSubmittedDate : vars.initialPayload.ApplicationSubmittedDate,
+                  PaymentActivitiesStatus : vars.initialPayload.PaymentActivitiesStatus,
+                  PaymentActivitiesDate : vars.initialPayload.PaymentActivitiesDate
+			}]
+		}
+	}
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<anypoint-mq:publish doc:name="publish-applicationEvent - DLQ" doc:id="9d97d86f-1924-41c9-bb5d-44a820067a85" config-ref="Anypoint_MQ_Config" destination="${anypointmq.application-dlq.name}" messageId="#[vars.timeStamp]" messageGroupId='"22222"'>
+					<anypoint-mq:body><![CDATA[#[%dw 2.0
+output application/json
+---
+vars.applicationJsonDLQ]]]></anypoint-mq:body>
+				</anypoint-mq:publish>
+			</on-error-propagate>
+		</error-handler>
+	</flow>	
+		
+</mule>

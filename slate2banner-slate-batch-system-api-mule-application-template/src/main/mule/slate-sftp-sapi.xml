@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+
+
+    
+    <flow name="slate-sftp-sapi-main">
+        <http:listener config-ref="slate-sftp-sapi-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="slate-sftp-sapi-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="slate-sftp-sapi-console">
+        <http:listener config-ref="slate-sftp-sapi-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="slate-sftp-sapi-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="get:\v1\test-scores\(SlateId):slate-sftp-sapi-config">
+		<set-variable value="#[attributes.uriParams.'SlateId']" doc:name="Set Variable" doc:id="8f6cee84-0957-4a52-ac4a-a583109ee4b9" variableName="inputSlateId"/>
+		<os:contains doc:name="Contains" doc:id="b7be4474-5cb7-457a-8842-3867c9908f8e" objectStore="Slate-to-Banner-Test-Scores-ObjectStore-Config" key="#[vars.inputSlateId]"/>
+		<choice doc:name="Choice" doc:id="b0a94ee7-833a-45c8-8599-4e918b5d64ce" >
+			<when expression="#[payload == true]">
+				<os:retrieve doc:name="Retrieve" doc:id="91abdbd3-9035-4ba5-b8e3-c6901f1aa0f7" key="#[vars.inputSlateId]" objectStore="Slate-to-Banner-Test-Scores-ObjectStore-Config" >
+					<os:default-value ><![CDATA[""]]></os:default-value>
+				</os:retrieve>
+			</when>
+			<otherwise >
+				<set-variable value="#[%dw 2.0&#10;import * from dw::util::Timer&#10;output application/java&#10;---&#10;currentMilliseconds()]" doc:name="current-timestamp-in-millisec" doc:id="bb1d48fe-ba32-4477-aa3e-8d582af740b5" variableName="timeStamp" />
+				<set-payload value='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "Timestamp" : vars.timeStamp as String,&#10;    "Event": {&#10;        "InterfaceDetails": {&#10;            "Domain": "slate-to-banner-testScores",&#10;            "ModuleName": "slate-sftp-sapi",&#10;            "MessageType": "slate-to-banner-testScores-raw",&#10;            "MessageRetried": 0&#10;        },&#10;        "Items": {&#10;            "Data": [&#10;                {&#10;                }&#10;            ]&#10;        }&#10;    }&#10;}]' doc:name="Set Payload" doc:id="28dd4446-b28a-4dcf-aaaf-6923f1d58a96" />
+			</otherwise>
+		</choice>
+    </flow>
+    <flow name="get:\v1\schools\(SlateId):slate-sftp-sapi-config">
+		<set-variable value="#[attributes.uriParams.'SlateId']" doc:name="Set Variable" doc:id="287718d1-49a2-45c0-9ad3-2f6ca761c8b3" variableName="inputSlateId" />
+		<os:contains doc:name="Contains" doc:id="ca0141dd-1350-434e-ac3a-8bbdee1655e0" key="#[vars.inputSlateId]" objectStore="Slate-to-Banner-Schools-ObjectStore-Config" />
+		<choice doc:name="Choice" doc:id="63d5c10d-e496-47a7-8730-53cc94046eec" >
+			<when expression="#[payload == true]" >
+				<os:retrieve doc:name="Retrieve" doc:id="27bfa6d2-ec29-4d30-8d2d-5a59cb2591be" key="#[vars.inputSlateId]" objectStore="Slate-to-Banner-Schools-ObjectStore-Config" >
+					<os:default-value ><![CDATA[""]]></os:default-value>
+				</os:retrieve>
+			</when>
+			<otherwise>
+				<set-variable value="#[%dw 2.0&#10;import * from dw::util::Timer&#10;output application/java&#10;---&#10;currentMilliseconds()]" doc:name="current-timestamp-in-millisec" doc:id="5047d521-9f43-4980-8334-9b411a77b69a" variableName="timeStamp" />
+				<set-payload value='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "Timestamp" : vars.timeStamp as String,&#10;    "Event": {&#10;        "InterfaceDetails": {&#10;            "Domain": "slate-to-banner-schools",&#10;            "ModuleName": "slate-sftp-sapi",&#10;            "MessageType": "slate-to-banner-schools-raw",&#10;            "MessageRetried": 0&#10;        },&#10;        "Items": {&#10;            "Data": [&#10;                {&#10;                }&#10;            ]&#10;        }&#10;    }&#10;}]' doc:name="Set Payload" doc:id="c357e669-8286-47fd-b375-67f3c4687137" />
+			</otherwise>
+		</choice>
+    </flow>
+    <flow name="get:\v1\addresses\(SlateId):slate-sftp-sapi-config">
+		<set-variable value="#[attributes.uriParams.'SlateId']" doc:name="Set Variable" doc:id="25b868fe-7259-4611-9356-b5a162c36a52" variableName="inputSlateId" />
+		<os:contains doc:name="Contains" doc:id="61abcfa7-0d78-48ac-a2da-e8f3057aec4f" key="#[vars.inputSlateId]" objectStore="Slate-to-Banner-Addresses-ObjectStore-Config" />
+		<choice doc:name="Choice" doc:id="c0d6447d-0a08-406b-bfbd-6da2b38b5b72" >
+			<when expression="#[payload == true]" >
+				<os:retrieve doc:name="Retrieve" doc:id="a1a6b3af-0046-4a12-b4e7-067dbbf68f75" key="#[vars.inputSlateId]" objectStore="Slate-to-Banner-Addresses-ObjectStore-Config" >
+					<os:default-value ><![CDATA[""]]></os:default-value>
+				</os:retrieve>
+			</when>
+			<otherwise>
+				<set-variable value="#[%dw 2.0&#10;import * from dw::util::Timer&#10;output application/java&#10;---&#10;currentMilliseconds()]" doc:name="current-timestamp-in-millisec" doc:id="2277ea6d-b7e8-40a2-8f9b-8d237213a51f" variableName="timeStamp" />
+				<set-payload value='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "Timestamp" : vars.timeStamp as String,&#10;    "Event": {&#10;        "InterfaceDetails": {&#10;            "Domain": "slate-to-banner-addresses",&#10;            "ModuleName": "slate-sftp-sapi",&#10;            "MessageType": "slate-to-banner-addresses-raw",&#10;            "MessageRetried": 0&#10;        },&#10;        "Items": {&#10;            "Data": [&#10;                {&#10;                }&#10;            ]&#10;        }&#10;    }&#10;}]' doc:name="Set Payload" doc:id="141e8396-640e-49ca-81f1-24ae67b5d7ec" />
+			</otherwise>
+		</choice>
+    </flow>
+    <flow name="get:\v1\persons\(SlateId):slate-sftp-sapi-config">
+		<set-variable value="#[attributes.uriParams.'SlateId']" doc:name="Set Variable" doc:id="a88aadc1-bae8-4b7c-927e-214735fb334c" variableName="inputSlateId" />
+		<os:contains doc:name="Contains" doc:id="ea683487-1cf5-4f7e-9443-7c494adda5a3" key="#[vars.inputSlateId]" objectStore="Slate-to-Banner-Persons-ObjectStore-Config" />
+		<choice doc:name="Choice" doc:id="130a2844-7a70-4105-89c6-3ae0c89e6cee" >
+			<when expression="#[payload == true]" >
+				<os:retrieve doc:name="Retrieve" doc:id="1b8ec095-91b8-46f9-9f93-da32a1e13882" key="#[vars.inputSlateId]" objectStore="Slate-to-Banner-Persons-ObjectStore-Config" >
+					<os:default-value ><![CDATA[""]]></os:default-value>
+				</os:retrieve>
+			</when>
+			<otherwise>
+				<set-variable value="#[%dw 2.0&#10;import * from dw::util::Timer&#10;output application/java&#10;---&#10;currentMilliseconds()]" doc:name="current-timestamp-in-millisec" doc:id="4082fb2d-49a3-477e-898c-5730d5edce32" variableName="timeStamp" />
+				<set-payload value='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "Timestamp" : vars.timeStamp as String,&#10;    "Event": {&#10;        "InterfaceDetails": {&#10;            "Domain": "slate-to-banner-persons",&#10;            "ModuleName": "slate-sftp-sapi",&#10;            "MessageType": "slate-to-banner-persons-raw",&#10;            "MessageRetried": 0&#10;        },&#10;        "Items": {&#10;            "Data": [&#10;                {&#10;                }&#10;            ]&#10;        }&#10;    }&#10;}]' doc:name="Set Payload" doc:id="d3fea3c7-5fad-4dea-8223-8f4b0186a844" />
+			</otherwise>
+		</choice>
+    </flow>
+
+</mule>

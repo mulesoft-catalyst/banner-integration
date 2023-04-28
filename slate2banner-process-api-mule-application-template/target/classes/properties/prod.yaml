@@ -1,0 +1,37 @@
+anypointmq:
+  url: "REPLACED_BY_USER"
+  application:
+    name: "REPLACED_BY_USER"
+  application-dlq:
+    name: "REPLACED_BY_USER"
+   
+# HTTP Request Configuration
+http-request:
+  # Alert Service SAPI Configuration
+  banner-admissions-sapi:
+    protocol: "REPLACED_BY_USER"
+    host: "REPLACED_BY_USER"
+    port: "REPLACED_BY_USER"
+    path: "REPLACED_BY_USER"  
+    maxRetry: "REPLACED_BY_USER"
+    maxInterval: "REPLACED_BY_USER"     
+    reconnection:
+      attempts: "REPLACED_BY_USER"  
+      interval: "REPLACED_BY_USER"
+      frequency: "REPLACED_BY_USER"
+      
+  # Slate sftp SAPI Configuration
+  slate-admissions-sapi:
+    host: "REPLACED_BY_USER"
+    port: "REPLACED_BY_USER"
+    basePath: "REPLACED_BY_USER"  
+    maxRetry: "REPLACED_BY_USER"
+    maxInterval: "REPLACED_BY_USER"
+    reconnection:
+      attempts: "REPLACED_BY_USER"  
+      interval: "REPLACED_BY_USER"
+      frequency: "REPLACED_BY_USER"        
+
+# Logger Category       
+logger:
+  category: "REPLACED_BY_USER"

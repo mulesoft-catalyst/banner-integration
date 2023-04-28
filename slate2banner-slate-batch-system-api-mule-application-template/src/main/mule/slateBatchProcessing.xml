@@ -1,0 +1,568 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:adtalem-core="http://www.mulesoft.org/schema/mule/adtalem-core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/adtalem-core http://www.mulesoft.org/schema/mule/adtalem-core/current/mule-adtalem-core.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd">
+	
+<sub-flow name="sf-core-flows" doc:id="48c5c105-192c-4775-8670-b82f0c75e28c" >
+		<set-variable value="#[%dw 2.0&#10;import * from dw::util::Timer&#10;output application/java&#10;---&#10;currentMilliseconds()]" doc:name="current-timestamp-in-millisec" doc:id="5bc77b3e-ab36-4ee2-aa5b-1a5a66a03307" variableName="timeStamp" />
+		<flow-ref doc:name="sf-slate-to-banner-persons-call" doc:id="47b40f30-e3d2-4bb6-9dea-b84b55f55c05" name="sf-slate-to-banner-persons" />
+		<flow-ref doc:name="sf-slate-to-banner-addresses-call" doc:id="9ac5f60c-10dc-40f6-9768-eb8fb824263e" name="sf-slate-to-banner-addresses" />
+		<flow-ref doc:name="sf-slate-to-banner-schools-call" doc:id="26492dc1-1ca6-42d9-8f1f-8a36a7be606e" name="sf-slate-to-banner-schools" />
+		<flow-ref doc:name="sf-slate-to-banner-test-scores-call" doc:id="58b4e9d6-1d0b-499a-b063-40c61439958c" name="sf-slate-to-banner-test-scores" />
+		<flow-ref doc:name="sf-slate-to-banner-application-call" doc:id="ca48b4b0-78c9-4a57-9b9e-4ca62d833bc8" name="sf-slate-to-banner-application" />
+	</sub-flow>
+		
+	<sub-flow name="sf-slate-to-banner-schools" doc:id="a006dbb7-7222-47e1-bdbf-29dd11a78370" >
+		<sftp:list doc:name="List - all self test files" doc:id="1fe7fb3c-c7c4-4046-9500-3cc5c2137ecb" config-ref="SFTP-Slate-Config" directoryPath="${sftp-slate.inputPath}">
+			<sftp:matcher caseSensitive="false" filenamePattern="*Schools*.csv" />
+		</sftp:list>
+		<foreach doc:name="For Each self test file" doc:id="a82f1989-36fe-4d33-85fe-c110455908b6" collection="#[payload]" >
+			<sftp:read doc:name="Read each self test file" doc:id="18a7c0f5-49fc-45b0-80a3-5717c58da976" config-ref="SFTP-Slate-Config" path="#[attributes.path]" />
+			<set-payload value="#[%dw 2.0&#10;output application/dw&#10;---&#10;payload]" doc:name="transform school csv to json" doc:id="4add8c7d-a81e-4820-b719-0da82421a2f0" />
+			<foreach doc:name="For record in a file" doc:id="12969aa2-aca5-42ed-bcdc-577f759aba15" collection="#[payload]" >
+				<ee:transform doc:name="schoolJson" doc:id="7d11f7de-8c25-43f9-8b34-a2ac0fb927ea" >
+					<ee:message />
+					<ee:variables >
+						<ee:set-variable variableName="schoolJson" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  SlateId           : payload.'Slate ID',
+  SlateAppId            : payload.'Slate App ID',
+  SchoolRankOverall       : payload.'School Rank Overall',
+  SchoolName          : payload.'School Name',
+  SchoolBannerId        : payload.'School Banner ID',
+  SchoolCEEB          : payload.'School CEEB',
+  SchoolType          : payload.'School Type',
+  TranscriptReceivedDate    : payload.'transcript received date',
+  TranscriptWaivedDate    : payload.'transcript waived date',
+  SchoolAttendedFromDate    : payload.'School Attended From Date',
+  SchoolAttendedToDate    : payload.'School Attended To Date',
+  SchoolCity          : payload.'School City',
+  SchoolRegion        : payload.'School Region',
+  SchoolCountry         : payload.'School Country',
+  SchoolDegree        : payload.'School Degree',
+  SchoolConferredDate     : payload.'School Conferred Date',
+  SchoolFinalGraduationDate   : payload.'School Final Graduation Date',
+  FinalTranscript       : payload.'Final Transcript'
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<os:retrieve doc:name="Retrieve" doc:id="8674ef69-3cec-4378-bf72-ee876a7958c0" key="#[vars.schoolJson.SlateId]" objectStore="Slate-to-Banner-Schools-ObjectStore-Config" target="schoolCached" >
+					<os:default-value ><![CDATA[#[""]]]></os:default-value>
+				</os:retrieve>
+				<choice doc:name="Choice" doc:id="ed56acc9-0fc0-40c1-b029-e8ac95733a86" >
+					<when expression='#[vars.schoolCached != ""]' >
+						<ee:transform doc:name="Transform Message" doc:id="7add8a53-63bd-400e-b622-a1d93b6bae30" >
+							<ee:message />
+							<ee:variables >
+								<ee:set-variable variableName="schoolJsonCombined" ><![CDATA[%dw 2.0
+output application/json
+---
+(vars.schoolCached.Event.Items.Data default []) << vars.schoolJson]]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+						<os:store doc:name="Store" doc:id="8f011206-7189-417f-b297-a57956d1a48f" key="#[vars.schoolJson.SlateId]" objectStore="Slate-to-Banner-Schools-ObjectStore-Config" >
+							<os:value ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+    "Timestamp" : vars.timeStamp as String,
+    "Event" : {
+        "InterfaceDetails"      :  {
+			"Domain" 			: "slate-to-banner-schools",
+			"ModuleName" 		: "slate-sftp-sapi",
+			"MessageType" 		: "slate-to-banner-schools-raw",
+			"MessageRetried" 	: 0
+        },
+        "Items" : {
+            "Data" : vars.schoolJsonCombined
+        }
+    }
+}]]]></os:value>
+						</os:store>
+					</when>
+					<otherwise >
+						<os:store doc:name="Store" doc:id="b2c94a4d-e0f9-449a-8043-4e351dece94e" key="#[vars.schoolJson.SlateId]" objectStore="Slate-to-Banner-Schools-ObjectStore-Config" >
+							<os:value ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+	"Timestamp" : vars.timeStamp as String,
+	"Event" : {
+		"InterfaceDetails" 		:  {
+			"Domain" 			: "slate-to-banner-schools",
+			"ModuleName" 		: "slate-sftp-sapi",
+			"MessageType" 		: "slate-to-banner-schools-raw",
+			"MessageRetried" 	: 0
+		},
+		"Items" : {
+			"Data" : [{
+				  "SlateId"           			: vars.schoolJson.SlateId,
+				  "SlateAppId"            		: vars.schoolJson.SlateAppId,
+				  "SchoolRankOverall"       		: vars.schoolJson.SchoolRankOverall,
+				  "SchoolName"          			: vars.schoolJson.SchoolName,
+				  "SchoolBannerId"        		: vars.schoolJson.SchoolBannerId,
+				  "SchoolCEEB"          			: vars.schoolJson.SchoolCEEB,
+				  "SchoolType"          			: vars.schoolJson.SchoolType,
+				  "TranscriptReceivedDate"    	: vars.schoolJson.TranscriptReceivedDate,
+				  "TranscriptWaivedDate"    		: vars.schoolJson.TranscriptWaivedDate,
+				  "SchoolAttendedFromDate"    	: vars.schoolJson.SchoolAttendedFromDate,
+				  "SchoolAttendedToDate"    		: vars.schoolJson.SchoolAttendedToDate,
+				  "SchoolCity"          			: vars.schoolJson.SchoolCity,
+				  "SchoolRegion"        			: vars.schoolJson.SchoolRegion,
+				  "SchoolCountry"         		: vars.schoolJson.SchoolCountry,
+				  "SchoolDegree"        			: vars.schoolJson.SchoolDegree,
+				  "SchoolConferredDate"     		: vars.schoolJson.SchoolConferredDate,
+				  "SchoolFinalGraduationDate"   	: vars.schoolJson.SchoolFinalGraduationDate,
+				  "FinalTranscript"       		: vars.schoolJson.FinalTranscript
+			}]
+		}
+	}
+}]]]></os:value>
+						</os:store>
+					</otherwise>
+				</choice>
+			</foreach>
+			<sftp:move doc:name="Move" doc:id="ac809009-9698-4ed7-a716-7c63500f3a23" config-ref="SFTP-Slate-Config" sourcePath="#[attributes.path]" targetPath="${sftp-slate.processedPath}" />
+		</foreach>
+	</sub-flow>
+		
+
+
+	<sub-flow name="sf-slate-to-banner-persons" doc:id="52a62cb7-10d9-4fb7-a983-6f61622bcbd3" >
+		<sftp:list doc:name="List - all person files" doc:id="b90408f3-0284-4da8-a9ee-0891abae0bfe" config-ref="SFTP-Slate-Config" directoryPath="${sftp-slate.inputPath}">
+			<sftp:matcher caseSensitive="false" filenamePattern="*Person*.csv" />
+		</sftp:list>
+		<foreach doc:name="For Each person file" doc:id="2c6be8e0-0cb2-412a-9f1a-2b4fcac0ef55" collection="#[payload]" >
+			<sftp:read doc:name="Read each person file" doc:id="1d99a0b5-ad0e-4a55-9eec-5c03ac19bb5c" config-ref="SFTP-Slate-Config" path="#[attributes.path]" />
+			<set-payload value="#[%dw 2.0&#10;output application/dw&#10;---&#10;payload]" doc:name="transform person csv to json" doc:id="fca094dd-6946-4210-b152-fe72b34bc999" />
+			<foreach doc:name="For record in a file" doc:id="5ecc356c-e361-4982-8107-d66de37aad2d" collection="#[payload]" >
+				<ee:transform doc:name="personJson" doc:id="e5217ec3-5ded-4b9e-9e63-6b538f55075d" >
+					<ee:message />
+					<ee:variables >
+						<ee:set-variable variableName="personJson" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+   SlateId             : payload.'Slate_ID',
+   SSN                  : payload.'SSN',
+   Email                : payload.'Email',
+   Phone                : payload.'Phone',
+   Mobile               : payload.'Mobile',
+   First                : payload.'First',
+   Middle               : payload.'Middle',
+   Last                 : payload.'Last',
+   Former_last_1        : payload.'Former_last_1',
+   Former_last_2        : payload.'Former_last_2',
+   Former_last_3        : payload.'Former_last_3',
+   Former_last_4        : payload.'Former_last_4',
+   Birthdate            : payload.'Birthdate',
+   Visa                 : payload.'Visa',
+   VisaNumber           : payload.'VisaNumber',   
+   Sex                  : payload.'Sex',
+   Race                 : payload.'Race',
+   citizenship_status   : payload.'citizenship_status',
+   Birth_Country        : payload.'Birth_Country',
+   Citizenship1         : payload.'Citizenship1',
+   Citizenship2         : payload.'Citizenship2',
+   Permanent_Resident   : payload.'Permanent_Resident',
+   Hispanic             : payload.'Hispanic',
+   First_Gneration      : payload.'First Gneration',
+   Military_Service     : payload.'Military_Service',
+   state_of_residence   : payload.'state_of_residence',
+   County_of_residence  : payload.'County_of_residence',
+   Residency_Length     : payload.'Residency_Length',
+   CCPR_Date            : payload.'CCPR Date',
+   CB_CLH               : payload.'CB_CLH',
+   FamilyAlumn          : payload.'FamilyAlumn',
+   Semester             : payload.'Semester',
+   StudyAbroad          : payload.'StudyAbroad',
+   CB_CLN               : payload.'CB_CLN'
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<os:store doc:name="Store" doc:id="d774b654-1dab-4b43-b831-b65b2a4c1be0" key="#[vars.personJson.SlateId]" objectStore="Slate-to-Banner-Persons-ObjectStore-Config" >
+					<os:value ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+    "Timestamp" : vars.timeStamp as String,
+    "Event" : {
+        "InterfaceDetails"      :  {
+            "Domain"            : "slate-to-banner-persons",
+            "ModuleName"        : "slate-sftp-sapi",
+            "MessageType"       : "slate-to-banner-persons-raw",
+            "MessageRetried"    : 0
+        },
+        "Items" : {
+            "Data" : [{
+                    "SlateId"         : vars.personJson.SlateId,
+                    "SSN"             : vars.personJson.SSN,
+                    "Email"           : vars.personJson.Email,
+                    "Phone"           : vars.personJson.Phone,
+                    "Mobile"          : vars.personJson.Mobile,
+                    "First"           : vars.personJson.First,
+                    "Middle"          : vars.personJson.Middle,
+                    "Last"            : vars.personJson.Last,
+                    "Former_last_1"   : vars.personJson.Former_last_1,
+                    "Former_last_2"   : vars.personJson.Former_last_2,
+                    "Former_last_3"   : vars.personJson.Former_last_3,
+                    "Former_last_4"   : vars.personJson.Former_last_4,
+                    "Birthdate"       : vars.personJson.Birthdate,
+                    "Visa"            : vars.personJson.Visa,
+                    "Sex"             : vars.personJson.Sex,
+                    "Race"            : vars.personJson.Race,
+                    "citizenship_status"      : vars.personJson.citizenship_status,
+                    "Birth_Country"   : vars.personJson.Birth_Country,
+                    "Citizenship1"    : vars.personJson.Citizenship1,
+                    "Citizenship2"    : vars.personJson.Citizenship2,
+                    "Permanent_Resident"      : vars.personJson.Permanent_Resident,
+                    "Hispanic"        : vars.personJson.Hispanic,
+                    "First_Gneration" : vars.personJson.FirstGneration,
+                    "Military_Service"        : vars.personJson.Military_Service,
+                    "state_of_residence"      : vars.personJson.state_of_residence,
+                    "County_of_residence"     : vars.personJson.County_of_residence,
+                    "Residency_Length"        : vars.personJson.Residency_Length,
+                    "CCPR_Date"               : vars.personJson.CCPRDate,
+                    "CB_CLH"                  : vars.personJson.CB_CLH,
+                    "CB_CLN"                  : vars.personJson.CB_CLN
+                }]
+        }
+    }
+}]]]></os:value>
+				</os:store>
+			</foreach>
+			<sftp:move doc:name="Move" doc:id="55faf8b9-2c2a-4003-9fc1-e9b70412e29b" config-ref="SFTP-Slate-Config" sourcePath="#[attributes.path]" targetPath="${sftp-slate.processedPath}"/>
+		</foreach>
+	</sub-flow>
+		
+	<sub-flow name="sf-slate-to-banner-addresses" doc:id="8a0e12cd-414a-4d13-bbd3-2c2afde72e72" >
+		<sftp:list doc:name="List - all address files" doc:id="4fdb231e-2878-4ac8-b513-88500d833581" config-ref="SFTP-Slate-Config" directoryPath="${sftp-slate.inputPath}">
+			<sftp:matcher caseSensitive="false" filenamePattern="*Addresses*.csv" />
+		</sftp:list>
+		<foreach doc:name="For Each address file" doc:id="cd8e18c2-d0e7-4eb4-be09-2f9b87c014f5" collection="#[payload]" >
+			<sftp:read doc:name="Read each address file" doc:id="f7cc6588-a386-4a7a-ab5b-2cf8c0d7cb2a" config-ref="SFTP-Slate-Config" path="#[attributes.path]" />
+			<set-payload value="#[%dw 2.0&#10;output application/dw&#10;---&#10;payload]" doc:name="transform address csv to json" doc:id="9f2cefac-af59-4f50-8a0d-d7c60a5c796f" />
+			<foreach doc:name="For record in a file" doc:id="a3aa9f45-195d-43ef-9323-365cd970d608" collection="#[payload]" >
+				<ee:transform doc:name="addressJson" doc:id="1d7a4b69-e115-4513-88c0-9782e5ed52d9" >
+					<ee:message />
+					<ee:variables >
+						<ee:set-variable variableName="addressJson" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  SlateId				: payload.'Slate_Id',
+  AddressRankOverall	: payload.'Address Rank Overall',
+  AddressType			: payload.'Address Type',
+  AddressStreet1		: payload.'Address Street 1',
+  AddressStreet2		: payload.'Address Street 2',
+  AddressStreet3		: payload.'Address Street 3',
+  AddressCity			: payload.'Address City',
+  AddressRegion			: payload.'Address Region',
+  AddressPostal			: payload.'Address Postal',
+  AddressCountry		: payload.'Address Country'
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<os:store doc:name="Store" doc:id="8226a369-e836-4274-8e32-0460b64007ab" key="#[vars.addressJson.SlateId]" objectStore="Slate-to-Banner-Addresses-ObjectStore-Config" >
+					<os:value ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+    "Timestamp" : vars.timeStamp as String,
+    "Event" : {
+        "InterfaceDetails"      :  {
+            "Domain"            : "slate-to-banner-addresses",
+            "ModuleName"        : "slate-sftp-sapi",
+            "MessageType"       : "slate-to-banner-addresses-raw",
+            "MessageRetried"    : 0
+        },
+        "Items" : {
+            "Data" : [{
+                      "SlateId"               : vars.addressJson.SlateId,
+                      "AddressRankOverall"    : vars.addressJson.AddressRankOverall,
+                      "AddressType"           : vars.addressJson.AddressType,
+                      "AddressStreet1"        : vars.addressJson.AddressStreet1,
+                      "AddressStreet2"        : vars.addressJson.AddressStreet2,
+                      "AddressStreet3"        : vars.addressJson.AddressStreet3,
+                      "AddressCity"           : vars.addressJson.AddressCity,
+                      "AddressRegion"         : vars.addressJson.AddressRegion,
+                      "AddressPostal"         : vars.addressJson.AddressPostal,
+                      "AddressCountry"        : vars.addressJson.AddressCountry
+                }]
+        }
+    }
+}]]]></os:value>
+				</os:store>
+			</foreach>
+			<sftp:move doc:name="Move" doc:id="5b461519-088b-476c-9c2d-981473c3fe5d" config-ref="SFTP-Slate-Config" sourcePath="#[attributes.path]" targetPath="${sftp-slate.processedPath}" />
+		</foreach>
+	</sub-flow>
+
+	<sub-flow name="sf-slate-to-banner-test-scores" doc:id="4e1b5cdd-4b1d-45ec-b84c-ccef0d5afb66" >
+		<sftp:list doc:name="List - all test scores files" doc:id="1b602ba4-450c-45b2-842c-55cbe587bc62" config-ref="SFTP-Slate-Config" directoryPath="${sftp-slate.inputPath}">
+			<sftp:matcher caseSensitive="false" filenamePattern="*Test Scores*.csv" />
+		</sftp:list>
+		<foreach doc:name="For Each test score file" doc:id="7cfa3d07-9e3c-4a3e-900b-ea9f357f830b" collection="#[payload]" >
+			<sftp:read doc:name="Read each test score file" doc:id="4d6fc484-9381-485a-9efd-8eefece8dcea" config-ref="SFTP-Slate-Config" path="#[attributes.path]" />
+			<set-payload value="#[%dw 2.0&#10;output application/dw&#10;---&#10;payload]" doc:name="transform test score csv to json" doc:id="1d8ec8db-9e07-416b-b7f4-b34d9c71b0cc" />
+			<foreach doc:name="For record in a file" doc:id="1d2d2e93-477b-4968-97e3-ae48162d7847" collection="#[payload]" >
+				<ee:transform doc:name="testScoreJson" doc:id="f3ba0913-f848-4dbb-ae18-e615f417a366" >
+					<ee:message />
+					<ee:variables >
+						<ee:set-variable variableName="testScoreJson" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "SlateId"     : payload.'Slate_ID',
+  "TestType"      : payload.'Test Type',
+  "TestSubtype"   : payload.'Test Subtype',
+  "TestTestDate"    : payload.'Test Test Date',
+  "TestTotalScore"  : payload.'Test Total Score',
+  "TestScore1"    : payload.'Test Score 1',
+  "TestScore2"    : payload.'Test Score 2',
+  "TestScore3"    : payload.'Test Score 3',
+  "TestScore4"    : payload.'Test Score 4',
+  "TestScore5"    : payload.'Test Score 5',
+  "TestScore6"    : payload.'Test Score 6',
+  "TestScore7"    : payload.'Test Score 7',
+  "TestScore8"    : payload.'Test Score 8',
+  "TestScore9"    : payload.'Test Score 9',
+  "TestScore10"   : payload.'Test Score 10',
+  "TestScore11"   : payload.'Test Score 11',
+  "TestScore12"   : payload.'Test Score 12',
+  "TestScore13"   : payload.'Test Score 13',
+  "TestScore14"   : payload.'Test Score 14',
+  "TestScore15"   : payload.'Test Score 15',
+  "TestScore16"   : payload.'Test Score 16',
+  "TestScore17"   : payload.'Test Score 17'
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<os:retrieve doc:name="Retrieve" doc:id="b0de8de2-17aa-4393-ada7-148123ef2b5e" key="#[vars.testScoreJson.SlateId]" objectStore="Slate-to-Banner-Test-Scores-ObjectStore-Config" target="testScoreCached">
+					<os:default-value><![CDATA[#[""]]]></os:default-value>
+				</os:retrieve>
+				<choice doc:name="Choice" doc:id="b70ae173-56e9-45bd-a0c0-e7929c056aa3" >
+					<when expression='#[vars.testScoreCached != ""]'>
+						<logger level="INFO" doc:name="Logger" doc:id="528a4558-28da-49db-9cb0-e23a69ba3fb0" message='"Existing Key found"' />
+						<ee:transform doc:name="Transform Message" doc:id="626e2ab8-0781-48bf-b8bd-f589148ad064" >
+							<ee:message />
+							<ee:variables >
+								<ee:set-variable variableName="testScoreJsonCombined" ><![CDATA[%dw 2.0
+output application/json
+---
+(vars.testScoreCached.Event.Items.Data default []) << vars.testScoreJson]]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+						<os:store doc:name="Store" doc:id="4d4b9fcf-f322-4a5b-a994-09aa7dcac329" key="#[vars.testScoreJson.SlateId]" objectStore="Slate-to-Banner-Test-Scores-ObjectStore-Config" >
+							<os:value ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+    "Timestamp" : vars.timeStamp as String,
+    "Event" : {
+        "InterfaceDetails"      :  {
+            "Domain"            : "slate-to-banner-testScores",
+            "ModuleName"        : "slate-sftp-sapi",
+            "MessageType"       : "slate-to-banner-testScores-raw",
+            "MessageRetried"    : 0
+        },
+        "Items" : {
+            "Data" : vars.testScoreJsonCombined
+        }
+    }
+}]]]></os:value>
+						</os:store>
+						<logger level="INFO" doc:name="Logger1" doc:id="98980e9d-e5b5-4efa-85a0-5b7051dd064e" message="#[vars.testScoreJsonCombined]" />
+					</when>
+					<otherwise >
+						<os:store doc:name="Store" doc:id="127655ba-74aa-4d6c-a065-97ec81e27d69" key="#[vars.testScoreJson.SlateId]" objectStore="Slate-to-Banner-Test-Scores-ObjectStore-Config">
+					<os:value><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+    "Timestamp" : vars.timeStamp as String,
+    "Event" : {
+        "InterfaceDetails"      :  {
+            "Domain"            : "slate-to-banner-testScores",
+            "ModuleName"        : "slate-sftp-sapi",
+            "MessageType"       : "slate-to-banner-testScores-raw",
+            "MessageRetried"    : 0
+        },
+        "Items" : {
+            "Data" : [{
+                "SlateId"   : vars.testScoreJson.SlateId,
+                "TestType"   : vars.testScoreJson.TestType,
+                "TestSubtype"   : vars.testScoreJson.TestSubtype,
+                "TestTestDate"   : vars.testScoreJson.TestTestDate,
+                "TestTotalScore"   : vars.testScoreJson.TestTotalScore,
+                "TestScore1"   : vars.testScoreJson.TestScore1,
+                "TestScore2"   : vars.testScoreJson.TestScore2,
+                "TestScore3"   : vars.testScoreJson.TestScore3,
+                "TestScore4"   : vars.testScoreJson.TestScore4,
+                "TestScore5"   : vars.testScoreJson.TestScore5,
+                "TestScore6"   : vars.testScoreJson.TestScore6,
+                "TestScore7"   : vars.testScoreJson.TestScore7,
+                "TestScore8"   : vars.testScoreJson.TestScore8,
+                "TestScore9"   : vars.testScoreJson.TestScore9,
+                "TestScore10"   : vars.testScoreJson.TestScore10,
+                "TestScore11"   : vars.testScoreJson.TestScore11,
+                "TestScore12"   : vars.testScoreJson.TestScore12,
+                "TestScore13"   : vars.testScoreJson.TestScore13,
+                "TestScore14"   : vars.testScoreJson.TestScore14,
+                "TestScore15"   : vars.testScoreJson.TestScore15,
+                "TestScore16"   : vars.testScoreJson.TestScore16,
+                "TestScore17"   : vars.testScoreJson.TestScore17
+            }]
+        }
+    }
+}]]]></os:value>
+				</os:store>
+						<logger level="INFO" doc:name="Logger" doc:id="5851b478-ff47-48da-b424-deff0f7a1909" message="#[vars.testScoreJson]" />
+					</otherwise>
+				</choice>
+			</foreach>
+			<sftp:move doc:name="Move" doc:id="9e3111bb-9ccd-41cd-b64e-94d7b73f28ac" config-ref="SFTP-Slate-Config" sourcePath="#[attributes.path]" targetPath="${sftp-slate.processedPath}" />
+		</foreach>
+	</sub-flow>
+	
+	<sub-flow name="sf-slate-to-banner-application" doc:id="0f94eb1c-e7d6-44ce-a141-8b9eff57d96d" >
+		<logger level="INFO" doc:name="Logger" doc:id="a258c967-762a-4276-ac49-c2dea203b91e" message='"Inside sf-slate-to-banner-application - publish application events flow"'/>
+		<sftp:list doc:name="List - all Application files" doc:id="5f4e2e8e-eb7d-45b4-9314-6c2eccf7813d" config-ref="SFTP-Slate-Config" directoryPath="${sftp-slate.inputPath}">
+			<sftp:matcher caseSensitive="false" filenamePattern="*Application*.csv" />
+		</sftp:list>
+		<foreach doc:name="For Each Application file" doc:id="f94bfb03-a7ac-4258-b6a2-098fc5ccced2" collection="#[payload]" >
+			<sftp:read doc:name="Read each Application file" doc:id="4c266ab6-57d1-4c9e-9cea-bfcec534dfa3" config-ref="SFTP-Slate-Config" path="#[attributes.path]" />
+			<set-payload value="#[%dw 2.0&#10;output application/dw&#10;---&#10;payload]" doc:name="transform Application csv to json" doc:id="4fa0dda5-9f5f-4081-a34c-6e14991fcba7" />
+			<foreach doc:name="For record in a file" doc:id="80c143aa-ef8e-43e2-81bd-67f0a5ee98cc" collection="#[payload]" >
+				<choice doc:name="Choice" doc:id="14ae1265-7cc6-4b16-89be-9b131c5656ec" >
+					<when expression="#[payload.'Slate ID' != null and payload.'Slate ID' != &quot;&quot;]">
+						<ee:transform doc:name="applicationJson" doc:id="d7d8c246-fd72-41fd-b7c3-e7b7eb4ebb53">
+					<ee:message />
+					<ee:variables>
+						<ee:set-variable variableName="applicationJson"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Timestamp" : vars.timeStamp as String,
+	"Event" : {
+		"InterfaceDetails" 		:  {
+			"Domain" 			: "slate-to-banner-application",
+			"ModuleName" 		: "slate-sftp-sapi",
+			"MessageType" 		: "slate-to-banner-application-raw",
+			"MessageRetried" 	: 0
+		},
+		"Items" : {
+			"Data" : [{
+  SlateId : payload.'Slate ID',
+  SlateAppId : payload.'Slate App ID',
+  StudentType : payload.'Student Type',
+  AcademicInterest1 : payload.'Academic Interest 1',
+  AcademicInterest2 : payload.'Academic Interest 2',
+  Program1 : payload.'Program 1',
+  Program2 : payload.'Program 2',
+  Program3 : payload.'Program 3',
+  Program4 : payload.'Program 4',
+  Program5 : payload.'Program 5',
+  GRTakingCourse : payload.'GR Taking Course',
+  GraduateInterest : payload.'Graduate Interest',
+  GRProgram1 : payload.'GR Program 1',
+  GRProgram2 : payload.'GR Program 2',
+  GREmphasis : payload.'GR Emphasis',
+  GRAttribute : payload.'GR Attribute',
+  GRAdvisor : payload.'GR Advisor',
+  Semester : payload.'Semester',
+  ApplicationApplicationDegreeType : payload.'Application Application Degree Type',
+  ApplicationApplicationBestDescription : payload.'Application Application Best Description',
+  ApplicationApplicationCurrentlyEnrolled : payload.'Application Application Currently Enrolled',
+  ApplicationApplicationProgramFormat : payload.'Application Application Program Format',
+  ApplicationEarlyAwarenessProgram : payload.'Application Early Awareness Program',
+  ApplicationApplicationPartialTermStart : payload.'Application Application Partial Term Start',
+  ApplicationTotalCollegeCreditHours : payload.'Application Total College Credit Hours',
+  ApplicationScholarship : payload.'Application Scholarship',
+  ApplicationCharterScholarship : payload.'Application Charter Scholarship',
+  ApplicationUprepScholarship : payload.'Application Uprep Scholarship',
+  ApplicationRecalculatedHSGPA : payload.'Application Recalculated HS GPA',
+  ApplicationRecalculatedCollegeGPA : payload.'Application Recalculated College GPA',
+  ApplicationCumulativeGraduateGPA : payload.'Application Cumulative Graduate GPA',
+  ApplicationCumulativeUndergraduateGPA : payload.'Application Cumulative Undergraduate GPA',
+  ApplicationLast60GPA : payload.'Application Last 60 GPA',
+  ApplicationFelonyHistory : payload.'Application Felony History',
+  ApplicationAppBadgesAndCertificates : payload.'Application App Badges and Certificates',
+  ApplicationSubmittedDate : payload.'Application Submitted Date',
+  PaymentActivitiesStatus : payload.'Payment Activities Status',
+  PaymentActivitiesDate : payload.'Payment Activities Date'
+			}]
+		}
+	}
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+						<set-variable value="#[%dw 2.0&#10;import * from dw::util::Timer&#10;output application/java&#10;---&#10;currentMilliseconds()]" doc:name="current-timestamp-in-millisec" doc:id="ad499373-2ca4-49b7-924d-c55413e61526" variableName="timeStamp" />
+						<anypoint-mq:publish doc:name="publish-applicationEvent" doc:id="e1436275-8c79-4182-b788-9663997d29fc" config-ref="Anypoint_MQ_Config" destination="${anypointmq.application.name}" messageId="#[vars.timeStamp]" messageGroupId='"11111"'>
+					<anypoint-mq:body><![CDATA[#[%dw 2.0
+output application/json
+---
+vars.applicationJson]]]></anypoint-mq:body>
+				</anypoint-mq:publish>
+						<logger level="INFO" doc:name="Logger" doc:id="f3cdf856-a5f1-4b2f-9113-e566e5e9a24a" message="#[vars.applicationJson]" />
+					</when>
+					<otherwise >
+						<logger level="ERROR" doc:name="Logger" doc:id="e24aa877-6b8f-4a5f-99ef-1293c445119e" message='"Empty SlateId detected"'/>
+					</otherwise>
+				</choice>
+			</foreach>
+			<sftp:move doc:name="Move" doc:id="cea107cb-52c4-4841-b483-49fc6093a385" config-ref="SFTP-Slate-Config" sourcePath="#[attributes.path]" targetPath="${sftp-slate.processedPath}" />
+		</foreach>
+		<set-variable value="#[%dw 2.0&#10;import * from dw::util::Timer&#10;output application/java&#10;---&#10;currentMilliseconds()]" doc:name="current-timestamp-in-millisec" doc:id="7804bc23-e720-4689-90b4-49cd256445cb" variableName="timeStamp" />
+		<anypoint-mq:publish doc:name="publish-applicationEvent1" doc:id="2b020314-9ea6-405b-9ca7-56713ede91a9" config-ref="Anypoint_MQ_Config" destination="${anypointmq.application.name}" messageId="#[vars.timeStamp]" messageGroupId='"11111"'>
+					<anypoint-mq:body><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+	"Timestamp" : vars.timeStamp as String,
+	"Event" : {
+		"InterfaceDetails" 		:  {
+			"Domain" 			: "slate-to-banner-application",
+			"ModuleName" 		: "slate-sftp-sapi",
+			"MessageType" 		: "slate-to-banner-application-raw-batch-finished",
+			"MessageRetried" 	: 0
+		},
+		"Items" : {
+			"Data" : [{
+				"SlateId" : ""
+			}]
+		}
+	}
+}]]]></anypoint-mq:body>
+				</anypoint-mq:publish>
+		<logger level="INFO" doc:name="Logger1" doc:id="70732765-f080-466c-a26d-177faed04ccb" message='"slate-to-banner-application-raw-batch-finished batch done"' />
+	</sub-flow>		
+
+	
+	<flow name="mf-slate-to-banner-application-schedular">
+	  <scheduler>
+	      <scheduling-strategy>
+				<cron expression="${schedular.cron}"/>
+	      </scheduling-strategy>
+	  </scheduler>
+		<flow-ref doc:name="sf-core-flows-call" doc:id="4ffda7b1-a0ed-41b0-a68c-a03e3c560529" name="sf-core-flows" />
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="50a4cc0a-3498-4b86-a959-725f234df6d3" >
+				<logger level="ERROR" doc:name="Logger" doc:id="f8bc4090-f40a-4b2b-a0f6-31115c45f5aa" message='"Error Occured"'/>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+			
+</mule>

@@ -1,0 +1,683 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd  http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+    <http:listener-config name="banner-admissions-system-api-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="8081" />
+    </http:listener-config>
+    <apikit:config name="banner-admissions-system-api-config" api="resource::601dfad5-7be8-47f4-a62f-6df888b86612:banner-admissions-system-api:1.0.1:raml:zip:banner-admissions-system-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <flow name="banner-admissions-system-api-main">
+        <http:listener config-ref="banner-admissions-system-api-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="banner-admissions-system-api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="banner-admissions-system-api-console">
+        <http:listener config-ref="banner-admissions-system-api-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="banner-admissions-system-api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="post:\v1\addresses:application\json:banner-admissions-system-api-config">
+        <logger level="INFO" doc:name="Logger start" doc:id="379918f9-e4c2-4ab5-b6a7-a10b93235a2e" message="#[&quot;starting &quot; ++ flow.name]" category="${logger.category}" />
+        <logger level="INFO" doc:name="Log payload" doc:id="96a186ff-0ef1-442a-839f-aa2723f3537a" message="SAPI payload: #[payload]" category="${logger.category}" />
+        <db:select doc:name="Select" doc:id="e1891a78-d15a-426a-9609-bd97a7096538" config-ref="Database_Banner_Config" target="bannerSequenceNumber">
+            <db:sql><![CDATA[SELECT NVL (MAX (srtaddr_seqno) + 1, 1) INTO seqno FROM saturn.srtaddr WHERE srtaddr_ridm = :ridm]]></db:sql>
+        </db:select>
+        <choice doc:name="Choice" doc:id="3fae42a2-4ed3-4419-9303-8599bca8e95c">
+            <when expression="#[sizeOf (vars.bannerSequenceNumber) &gt; 0 and vars.bannerSequenceNumber[0].seqno != null]">
+                <ee:transform doc:name="Transform Message" doc:id="56c905c8-3644-4cae-8c3f-2611b6758dcb">
+                    <ee:message />
+                    <ee:variables>
+                        <ee:set-variable variableName="atypCode"><![CDATA[%dw 2.0
+output text/plain
+---
+if (payload.AddressCountry == "US")
+	"PR"
+else
+	"FP"]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+                <db:insert doc:name="Insert" doc:id="b3c41eb1-700c-4375-ba06-63290acb3465" config-ref="Database_Banner_Config">
+                    <db:sql><![CDATA[INSERT INTO saturn.srtaddr (
+	srtaddr_ridm,
+    srtaddr_atyp_code,
+    srtaddr_seqno,
+    srtaddr_city,
+    srtaddr_activity_date,
+    srtaddr_from_date,
+    srtaddr_street_line1,
+    srtaddr_street_line2,
+    srtaddr_street_line3,
+    srtaddr_stat_code,
+    srtaddr_zip,
+    srtaddr_natn_code)
+VALUES (
+:ridm,
+:atyp_code,
+:seqno,
+:city,
+SYSDATE,
+SYSDATE,
+:street_line1,
+:street_line2,
+:street_line3,
+:stat_code,
+:zip,
+:natn_code);]]></db:sql>
+                    <db:input-parameters><![CDATA[#[{
+	ridm : payload.Ridm,
+	atyp_code : vars.atypCode,
+	seqno : vars.bannerSequenceNumber[0].seqno,
+	city : payload.AddressCity,
+	street_line1 : payload.AddressStreet1,
+	street_line2 : payload.AddressStreet2,
+	street_line3 : payload.AddressStreet3,
+	stat_code : payload.AddressRegion,
+	zip : payload.AddressPostal,
+	natn_code : payload.AddressCountry	
+}]]]></db:input-parameters>
+                </db:insert>
+                <ee:transform doc:name="Transform Message" doc:id="3d23a869-4456-4759-b720-929fce02af44">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  StatusCode: "200",
+  Message: "Successfully inserted address : admission"
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </when>
+            <otherwise>
+                <ee:transform doc:name="Transform Message" doc:id="1db1fabc-a789-4620-b10e-eee0f722a5fe">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  StatusCode: "500",
+  Message: "Error inserting address : admission"
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </otherwise>
+        </choice>
+        <error-handler>
+            <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="572ce80f-9e77-4875-a3c1-1919b0bd5b6d">
+                <ee:transform doc:name="Transform Message" doc:id="254aa9ee-948b-4255-8d6e-29baf7a70a0a">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  StatusCode: "500",
+  Message: "Error inserting address : admission"
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="post:\v1\admissions:application\json:banner-admissions-system-api-config">
+        <db:insert doc:name="Insert -- saturn.srtints AcademicInterest1" doc:id="3e75690a-f2fb-4b87-bf54-92de6d9ee0dd" config-ref="Database_Banner_Config">
+            <db:sql><![CDATA[INSERT INTO saturn.srtints (srtints_ridm, srtints_ints_code, srtints_activity_date)
+VALUES (ridm, ints_code, SYSDATE);]]></db:sql>
+            <db:input-parameters><![CDATA[#[{
+ ridm         : payload.Ridm,
+ ints_code    : payload.AcademicInterest1    
+}]]]></db:input-parameters>
+        </db:insert>
+        <db:insert doc:name="Insert -- saturn.srtints AcademicInterest2" doc:id="be67a30e-9d73-4b82-b3d3-9f3d78190722" config-ref="Database_Banner_Config">
+            <db:sql><![CDATA[INSERT INTO saturn.srtints (srtints_ridm, srtints_ints_code, srtints_activity_date)
+VALUES (ridm, ints_code, SYSDATE);]]></db:sql>
+            <db:input-parameters><![CDATA[#[{
+ ridm         : payload.Ridm,
+ ints_code    : payload.AcademicInterest2    
+}]]]></db:input-parameters>
+        </db:insert>
+        <db:insert doc:name="Insert -- saturn.srtints Program1" doc:id="383e8d65-1566-4aad-9b1b-42552e1012d7" config-ref="Database_Banner_Config">
+            <db:sql><![CDATA[INSERT INTO saturn.srtints (srtints_ridm, srtints_ints_code, srtints_activity_date)
+VALUES (ridm, ints_code, SYSDATE);]]></db:sql>
+            <db:input-parameters><![CDATA[#[{
+ ridm         : payload.Ridm,
+ ints_code    : payload.Program1    
+}]]]></db:input-parameters>
+        </db:insert>
+        <db:insert doc:name="Insert -- saturn.srtints Program2" doc:id="d64a175c-c174-42f1-ae2c-15ccb7ef59e6" config-ref="Database_Banner_Config">
+            <db:sql><![CDATA[INSERT INTO saturn.srtints (srtints_ridm, srtints_ints_code, srtints_activity_date)
+VALUES (ridm, ints_code, SYSDATE);]]></db:sql>
+            <db:input-parameters><![CDATA[#[{
+ ridm         : payload.Ridm,
+ ints_code    : payload.Program2  
+}]]]></db:input-parameters>
+        </db:insert>
+        <db:select doc:name="Select - stvsbgi_code" doc:id="5d2708db-8718-424e-9288-11d1e0d120b4" config-ref="Database_Banner_Config" target="queryStvsbgiCode">
+            <db:sql><![CDATA[SELECT stvsbgi_code FROM saturn.stvsbgi WHERE stvsbgi_type_ind = 'S']]></db:sql>
+        </db:select>
+        <db:select doc:name="Select - seqno" doc:id="017febbe-a1ee-41ca-967b-7452962b3ea8" config-ref="Database_Banner_Config" target="querySeqno">
+            <db:sql><![CDATA[SELECT NVL (MAX (srtprel_admin_seqno) + 1, 1) AS 'seqno'
+FROM saturn.srtprel
+WHERE srtprel_ridm = :ridm]]></db:sql>
+            <db:input-parameters><![CDATA[#[{
+ ridm           : payload.Ridm
+}]]]></db:input-parameters>
+        </db:select>
+        <db:select doc:name="Select -- querySobCurr" doc:id="48fcb7ef-e610-4087-845f-3bca63571884" config-ref="Database_Banner_Config" target="querySobCurr">
+            <db:sql><![CDATA[SELECT DISTINCT sobcurr_program,
+                                sobcurr_levl_code,
+                                sobcurr_degc_code,
+                                sorcmjr_majr_code,
+                                sobcurr_coll_code
+                  INTO l_program,
+                       levl_code,
+                       degc_code,
+                       majr_code,
+                       coll_code
+                  FROM saturn.sorcmjr, saturn.sobcurr, saturn.sormcrl s1
+                 WHERE     sobcurr_program = p_program
+                       AND sobcurr_curr_rule = sorcmjr_curr_rule
+                       AND sobcurr_curr_rule = s1.sormcrl_curr_rule
+                       AND s1.sormcrl_adm_ind = 'Y'
+                       AND sorcmjr_adm_ind = 'Y'
+                       AND sobcurr_levl_code = 'U'
+                       AND s1.sormcrl_term_code_eff =
+                           (SELECT MAX (s2.sormcrl_term_code_eff)
+                              FROM saturn.sormcrl s2
+                             WHERE s2.sormcrl_curr_rule =
+                                   s1.sormcrl_curr_rule);]]></db:sql>
+        </db:select>
+        <db:insert doc:name="Insert into - saturn.srtprel" doc:id="c14e6b5f-9571-45b4-aad5-5b74fe574215" config-ref="Database_Banner_Config">
+            <db:sql><![CDATA[INSERT INTO saturn.srtprel (srtprel_ridm,
+    srtprel_prel_code,
+    srtprel_user,
+    srtprel_add_date,
+    srtprel_term_code,
+    srtprel_admin_seqno,
+    srtprel_levl_code,
+    srtprel_degc_code,
+    srtprel_majr_code,
+    srtprel_activity_date,
+    srtprel_program,
+    srtprel_coll_code,
+    srtprel_admt_code,
+    srtprel_styp_code,
+    srtprel_sbgi_code,
+    srtprel_ctyp_code,
+    srtprel_term_code_ctlg,
+    srtprel_resd_code)
+VALUES (ridm,
+prel_code,
+user_id,
+SYSDATE,
+term_code,
+seqno,
+levl_code,
+degc_code,
+majr_code,
+SYSDATE,
+l_program,
+coll_code,
+admt_code,
+styp_code,
+sbgi_code,
+ctyp_code,
+term_code,
+resd_code)]]></db:sql>
+            <db:input-parameters><![CDATA[#[{
+ ridm           : payload.Ridm,
+ prel_code     :  "SOURCE_SYSTEM-TBD",
+ user_id       : "mulesoft-tbd",
+ term_code      : payload.Semester,
+ seqno          : vars.querySeqno[0].seqno, 
+ levl_code      : vars.querySobCurr[0].levl_code,
+ degc_code      : vars.querySobCurr[0].degc_code,
+ majr_code      : vars.querySobCurr[0].majr_code,
+ l_program      : vars.querySobCurr[0].l_program,
+ coll_code      : vars.querySobCurr[0].l_program,
+ admt_code      : "4M/2M/HI/HS-TBD",
+ styp_code      : payload.StudentType,
+ sbgi_code      : "SOURCE-SYSTEM-TBD",
+ ctyp_code      : vars.queryStvsbgiCode[0].stvsbgi_code,
+ term_code      : payload.Semester,
+ resd_code      : "Residency|out-state-tbd"
+}]]]></db:input-parameters>
+        </db:insert>
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  SlateId: "999999999",
+  SlateAppId: "999999999",
+  StudentType: "Graduate",
+  AcademicInterest1: "",
+  AcademicInterest2: "",
+  Program1: "",
+  Program2: "",
+  Program3: "",
+  Program4: "",
+  Program5: "",
+  GRTakingCourse: "",
+  GraduateInterest: "",
+  GRProgram1: "BIO-MS",
+  GRProgram2: "",
+  GREmphasis: "AQS",
+  GRAttribute: "",
+  GRAdvisor: "",
+  Semester: "Fall 2023",
+  ApplicationApplicationDegreeType: "",
+  ApplicationApplicationBestDescription: "",
+  ApplicationApplicationCurrentlyEnrolled: "",
+  ApplicationApplicationProgramFormat: "",
+  ApplicationEarlyAwarenessProgram: "",
+  ApplicationApplicationPartialTermStart: "",
+  ApplicationTotalCollegeCreditHours: "",
+  ApplicationScholarship: "",
+  ApplicationCharterScholarship: "",
+  ApplicationUprepScholarship: "",
+  ApplicationRecalculatedHSGPA: "",
+  ApplicationRecalculatedCollegeGPA: "",
+  ApplicationCumulativeGraduateGPA: "",
+  ApplicationCumulativeUndergraduateGPA: "",
+  ApplicationLast60GPA: "",
+  ApplicationFelonyHistory: 0,
+  ApplicationAppBadgesAndCertificates: "",
+  ApplicationSubmittedDate: "7/25/2022",
+  PaymentActivitiesStatus: "Waived",
+  PaymentActivitiesDate: "7/25/2022"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="post:\v1\persons:application\json:banner-admissions-system-api-config">
+        <logger level="INFO" doc:name="Logger start" doc:id="6b6529de-69c9-4cb8-9e67-c0ee273e39f5" message="#[&quot;starting &quot; ++ flow.name]" category="${logger.category}" />
+        <db:select doc:name="Select" doc:id="bb7eca66-7ee6-4486-a29d-42f8e5e2e0b3" config-ref="Database_Banner_Config" target="bannerSequenceNumber">
+            <db:sql><![CDATA[SELECT NVL (MAX (srtaddr_seqno) + 1, 1) INTO seqno FROM saturn.srtaddr WHERE srtaddr_ridm = :ridm]]></db:sql>
+        </db:select>
+        <choice doc:name="create_srttele" doc:id="fa2b57c3-707f-44e4-88e4-f48d0c8cdb41">
+            <when expression="#[sizeOf (vars.bannerSequenceNumber) &gt; 0 and vars.bannerSequenceNumber[0].seqno != null]">
+                <ee:transform doc:name="Transform Message" doc:id="f01c694b-6542-456d-80f8-d57990a599a2">
+                    <ee:message />
+                    <ee:variables>
+                        <ee:set-variable variableName="phoneArea"><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output text/plain
+---
+substring(payload.Phone, 0, 3)]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+                <db:insert doc:name="Insert into - saturn.srttele" doc:id="f4103680-1c87-4da8-97f3-2b12ee3e36dc" config-ref="Database_Banner_Config">
+                    <db:sql><![CDATA[INSERT INTO saturn.srttele (srttele_ridm,
+    srttele_seqno,
+    srttele_tele_code,
+    srttele_activity_date,
+    srttele_phone_area,
+    srttele_phone_number,
+    srttele_primary_ind,
+    srttele_atyp_code)
+VALUES (ridm,
+ :seqno,
+ :tele_code,
+ SYSDATE,
+ :phone_area,
+ :phone_number,
+ NULL,
+ NULL)]]></db:sql>
+                    <db:input-parameters><![CDATA[#[{
+    ridm : payload.Ridm,
+    seqno : vars.bannerSequenceNumber[0].seqno,
+    tele_code : 'CELL/PR/N1/N2',
+    phone_area : vars.phoneArea,
+    phone_number : payload.Phone
+}]]]></db:input-parameters>
+                </db:insert>
+                <db:select doc:name="Select - gtvemal_disp_web_ind" doc:id="f56f393c-0e42-43c3-a3ee-d07acb01974c" config-ref="Database_Banner_Config" target="queryDispWebInd">
+                    <db:sql><![CDATA[SELECT gtvemal_disp_web_ind FROM general.gtvemal WHERE gtvemal_code = :emal_code]]></db:sql>
+                    <db:input-parameters><![CDATA[#[{
+	emal_code	: 'PS'
+}]]]></db:input-parameters>
+                </db:select>
+                <db:insert doc:name="Insert into - saturn.srtemal" doc:id="fdf2fc2b-bb67-41d9-8de6-722fffc43a58" config-ref="Database_Banner_Config">
+                    <db:sql><![CDATA[INSERT INTO saturn.srtemal (srtemal_ridm,
+    srtemal_emal_code,
+    srtemal_email_address,
+    srtemal_status_ind,
+    srtemal_preferred_ind,
+    srtemal_disp_web_ind,
+    srtemal_activity_date,
+    srtemal_user_id)
+VALUES (
+:ridm,
+:emal_code,
+:email,
+'A',
+'Y',
+:p_gtvemal_disp_web_ind,
+SYSDATE,
+:user_id)]]></db:sql>
+                    <db:input-parameters><![CDATA[#[{
+    ridm : payload.Ridm,
+    emal_code : 'PS',
+    p_gtvemal_disp_web_ind : vars.queryDispWebInd[0].gtvemal_disp_web_ind,
+    user_id : 'mulesoft'
+}]]]></db:input-parameters>
+                </db:insert>
+                <db:select doc:name="Select - querylId" doc:id="f796ff0b-817b-48b8-88aa-350b669f04e3" config-ref="Database_Banner_Config" target="querylId">
+                    <db:sql><![CDATA[SELECT    sobseqn_seqno_prefix
+               || LPAD (TO_CHAR (sobseqn_maxseqno + 1), 8, '0')
+          INTO srt_id
+          FROM saturn.sobseqn
+         WHERE sobseqn_function = 'PROSPECT_ID']]></db:sql>
+                </db:select>
+                <db:update doc:name="Update - sobseqn_maxseqno" doc:id="0c4d42e5-9068-4bda-a185-88ace4c03dc7" config-ref="Database_Banner_Config">
+                    <db:sql><![CDATA[UPDATE saturn.sobseqn
+           SET sobseqn_maxseqno = sobseqn_maxseqno + 1,
+               sobseqn_activity_date = SYSDATE
+         WHERE sobseqn_function = 'PROSPECT_ID';]]></db:sql>
+                </db:update>
+                <db:insert doc:name="Insert into - saturn.srtiden" doc:id="3bc39760-b0e2-4767-aeee-5dac8d531b21" config-ref="Database_Banner_Config">
+                    <db:sql><![CDATA[INSERT INTO saturn.srtiden (
+    srtiden_ridm,
+    srtiden_id,
+    srtiden_last_name,
+    srtiden_activity_date,
+    srtiden_first_name,
+    srtiden_mi)
+VALUES (
+:ridm,
+:srt_id,
+:last_name,
+SYSDATE,
+:first_name,
+:mi)]]></db:sql>
+                    <db:input-parameters><![CDATA[#[{
+    ridm : payload.Ridm,
+    srt_id : vars.querylId[0].srt_id,
+    last_name: payload.Last,
+    first_name: payload.First,
+    mi: payload.Middle
+}]]]></db:input-parameters>
+                </db:insert>
+                <db:insert doc:name="Insert into - srtintl" doc:id="a459b810-e6a3-4fd6-be82-a78305e58578" config-ref="Database_Banner_Config">
+                    <db:sql><![CDATA[INSERT INTO srtintl (srtintl_ridm,
+     srtintl_vtyp_code_current,
+     srtintl_vtyp_code_entry,
+     srtintl_natn_code_legal,
+     srtintl_natn_code_birth,
+     srtintl_activity_date,
+     srtintl_visa_number)
+VALUES (ridm,
+vtyp_code,
+vtyp_code,
+natn_code,
+natn_code_birth,
+SYSDATE,
+visa_number)]]></db:sql>
+                    <db:input-parameters><![CDATA[#[{
+        ridm            :  payload.Ridm,
+        vtyp_code       :  payload.Visa,
+        natn_code       :  payload.CitizenshipStatus,
+        natn_code_birth :  payload.BirthCountry,
+        visa_number     :  payload.VisaNumber         
+}]]]></db:input-parameters>
+                </db:insert>
+                <db:insert doc:name="Insert into - saturn.srtpers" doc:id="9b3f0239-e9a0-43e6-b1df-c25daf1586fa" config-ref="Database_Banner_Config">
+                    <db:sql><![CDATA[INSERT INTO saturn.srtpers (srtpers_ridm,
+    srtpers_activity_date,
+    srtpers_ssn,
+    srtpers_birth_date,
+    srtpers_sex,
+    srtpers_name_suffix,
+    srtpers_citz_code,
+    srtpers_birth_day,
+    srtpers_birth_mon,
+    srtpers_birth_year,
+    srtpers_birth_century,
+    srtpers_lgcy_code,
+    srtpers_ethn_category)
+VALUES (
+    ridm,
+    SYSDATE,
+    ssn,
+    birth_date,
+    gender,
+    "",
+    citz_code,
+    birth_date,
+    birth_date,
+    birth_date,
+    birth_date,
+    familygrad,
+    ishispaniclatino)]]></db:sql>
+                    <db:input-parameters><![CDATA[#[{
+        ridm            :  payload.Ridm,
+        ssn       :  payload.SSN,
+        birth_date       :  payload.Birthdate,
+        citz_code :  payload.CitizenshipStatus,
+        familygrad     :  payload.FamilyAlumn,
+        ishispaniclatino     :  payload.Hispanic	
+}]]]></db:input-parameters>
+                </db:insert>
+                <ee:transform doc:name="Transform Message1" doc:id="e573771d-87ec-4915-a53b-943af57bc098">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  StatusCode: "200",
+  Message: "Successfully inserted person : admission"
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </when>
+            <otherwise>
+                <ee:transform doc:name="Transform Message" doc:id="24021081-c36e-4ca3-9df6-8a3415dc7d1f">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  StatusCode: "500",
+  Message: "Error inserting address : admission"
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </otherwise>
+        </choice>
+    </flow>
+    <flow name="post:\v1\schools:application\json:banner-admissions-system-api-config">
+        <db:select doc:name="Select - queryStvsbgi" doc:id="15d4c74b-6293-4208-82a5-73988cebb6ed" target="queryStvsbgi" config-ref="Database_Banner_Config">
+            <db:sql><![CDATA[SELECT stvsbgi_desc,
+   sobsbgi_street_line1,
+   sobsbgi_city,
+   sobsbgi_stat_code,
+   sobsbgi_zip,
+   sobsbgi_natn_code
+FROM saturn.stvsbgi, saturn.sobsbgi
+WHERE     stvsbgi_code = :sbgi_code]]></db:sql>
+        </db:select>
+        <db:insert doc:name="insert - saturn.srthsch" doc:id="0f958d5d-ca3b-48ba-980d-31a66352789e" config-ref="Database_Banner_Config">
+            <db:sql><![CDATA[INSERT INTO saturn.srthsch (srthsch_ridm,
+                srthsch_sbgi_code,
+                srthsch_activity_date,
+                srthsch_sbgi_desc,
+                srthsch_street_line1,
+                srthsch_city,
+                srthsch_stat_code,
+                srthsch_zip,
+                srthsch_trans_recv_date)
+VALUES (
+ ridm,
+ sbgi_code,
+ SYSDATE,
+ stvsbgi_desc,
+ sobsbgi_street_line1,
+ sobsbgi_city,
+ sobsbgi_stat_code,
+ sobsbgi_zip,
+ tran_recv);]]></db:sql>
+            <db:input-parameters><![CDATA[#[{
+ ridm                   :  payload.Ridm,
+ sbgi_code              : payload.SchoolCEEB,
+ stvsbgi_desc           : vars.queryStvsbgi[0].stvsbgi_desc,
+ sobsbgi_street_line1   : vars.queryStvsbgi[0].sobsbgi_street_line1,
+ sobsbgi_city           : vars.queryStvsbgi[0].sobsbgi_city,
+ sobsbgi_stat_code      : vars.queryStvsbgi[0].sobsbgi_stat_code,
+ sobsbgi_zip            : vars.queryStvsbgi[0].sobsbgi_zip,
+ tran_recv              : payload.TranscriptReceivedDate
+}]]]></db:input-parameters>
+        </db:insert>
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  StatusCode: "200",
+  Message: "Successfully inserted school : admission"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="post:\v1\test-scores:application\json:banner-admissions-system-api-config">
+        <db:insert doc:name="Insert -- saturn.srttest" doc:id="c4674145-2de2-4473-93cf-167d58413446" config-ref="Database_Banner_Config">
+            <db:sql><![CDATA[INSERT INTO saturn.srttest (
+    srttest_ridm,
+    srttest_tesc_code,
+    srttest_test_date,
+    srttest_test_score,
+    srttest_activity_date)
+VALUES (
+    ridm,
+    tesc_code,
+    test_date,
+    test_score,
+    SYSDATE)]]></db:sql>
+            <db:input-parameters><![CDATA[#[{
+ ridm         : payload.Ridm,
+ tesc_code    : payload.TestType,
+ test_date    : payload.TestDate,
+ test_score   : payload.TestTotalScore    
+}]]]></db:input-parameters>
+        </db:insert>
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  StatusCode: "200",
+  Message: "Successfully inserted test scores : admission"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+</mule>
